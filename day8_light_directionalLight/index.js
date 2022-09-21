@@ -25,19 +25,17 @@ scene.add(light)
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 
+// 新增地球
 const earthGeometry = new THREE.SphereGeometry(5,50,50)
-// 匯入材質
 const earthTexture = new THREE.TextureLoader().load('2k_earth_daymap.jpeg')
-// 帶入材質，設定內外面
 const earthMaterial = new THREE.MeshStandardMaterial( { map: earthTexture, side: THREE.DoubleSide})
 const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-earth.position.set(40,0,-40)
+earth.position.set(20,0,-20)
 scene.add(earth);
 
+// 新增太陽
 const sunGeometry = new THREE.SphereGeometry(5,50,50)
-// 匯入材質
 const sunTexture = new THREE.TextureLoader().load('2k_sun.jpeg')
-// 帶入材質，設定內外面
 const sunMaterial = new THREE.MeshBasicMaterial( { map: sunTexture, side: THREE.DoubleSide})
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
