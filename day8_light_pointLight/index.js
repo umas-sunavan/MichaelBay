@@ -25,32 +25,27 @@ scene.add(light)
 const sphere = new THREE.Mesh(geometry, material);
 scene.add(sphere);
 
+// 新增地球
 const earthGeometry = new THREE.SphereGeometry(5,50,50)
-// 匯入材質
-const earthTexture = new THREE.TextureLoader().load('2k_earth_daymap.jpeg')
-// 帶入材質，設定內外面
+const earthTexture = new THREE.TextureLoader().load('https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/Solarsystemscope_texture_8k_earth_daymap.jpg/800px-Solarsystemscope_texture_8k_earth_daymap.jpg')
 const earthMaterial = new THREE.MeshStandardMaterial( { map: earthTexture, side: THREE.DoubleSide})
 const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-earth.position.set(40,0,-40)
+earth.position.set(20,0,0)
 scene.add(earth);
 
+// 新增太陽
 const sunGeometry = new THREE.SphereGeometry(5,50,50)
-// 匯入材質
-const sunTexture = new THREE.TextureLoader().load('2k_sun.jpeg')
-// 帶入材質，設定內外面
+const sunTexture = new THREE.TextureLoader().load('https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Map_of_the_full_sun.jpg/800px-Map_of_the_full_sun.jpg')
 const sunMaterial = new THREE.MeshBasicMaterial( { map: sunTexture, side: THREE.DoubleSide})
 const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 scene.add(sun);
 
-// 新增平行光
-const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
-scene.add(directionalLight);
+// 新增點光
+const pointLight = new THREE.PointLight(0xffffff, 1)
+scene.add(pointLight);
 // 新增Helper
-const lightHelper = new THREE.DirectionalLightHelper(directionalLight, 20, 0xffff00)
+const lightHelper = new THREE.PointLightHelper(pointLight, 20, 0xffff00)
 scene.add(lightHelper);
-// 更新位置
-directionalLight.target.position.set(40, 0, -40);
-directionalLight.target.updateMatrixWorld();
 // 更新Helper
 lightHelper.update();
 
@@ -60,18 +55,7 @@ new OrbitControls( camera, renderer.domElement );
 const axesHelper = new THREE.AxesHelper( 5 );
 scene.add( axesHelper );
 
-// 建立一個向量，以儲存鏡頭方向
-// const cameraLookAt = new THREE.Vector3(0,0,0)
-// 宣告旋轉變數
-// let rotation = 0
-
 function animate() {
-	// 每幀更新旋轉變數
-	// rotation += 0.05
-	// 變化該向量
-	// cameraLookAt.set(0,0 + Math.cos(rotation),0)
-	// 看向該向量
-	// camera.lookAt(cameraLookAt)
 	requestAnimationFrame( animate );
 	renderer.render( scene, camera );
 
