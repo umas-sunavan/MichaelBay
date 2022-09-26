@@ -25,6 +25,8 @@ const planeMaterial = new THREE.MeshStandardMaterial({ side: THREE.BackSide, col
 const sphere = new THREE.Mesh(sphereGeometry, planeMaterial)
 sphere.position.set(0, 0, 0)
 scene.add(sphere)
+sphere.receiveShadow = true
+sphere.castShadow = true
 
 new GLTFLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/file.gltf', gltf => {
 	gltf.scene.traverse(object => {
