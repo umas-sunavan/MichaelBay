@@ -105,18 +105,82 @@ scene.add(cloud);
 
 
 // 帶入鏡頭跟renderer.domElement實例化它即可
-new OrbitControls(camera, renderer.domElement);
+const control = new OrbitControls(camera, renderer.domElement);
 
 const axesHelper = new THREE.AxesHelper(5);
 scene.add(axesHelper);
 
+const cities = [
+	{ name: "--- select city ---", id: 0, lat: 0, lon: 0, country: "None" },
+	{ name: "Mumbai", id: 1356226629, lat: 19.0758, lon: 72.8775, country: "India" },
+	{ name: "Moscow", id: 1643318494, lat: 55.7558, lon: 37.6178, country: "Russia" },
+	{ name: "Xiamen", id: 1156212809, lat: 24.4797, lon: 118.0819, country: "China" },
+	{ name: "Phnom Penh", id: 1116260534, lat: 11.5696, lon: 104.9210, country: "Cambodia" },
+	{ name: "Chicago", id: 1840000494, lat: 41.8373, lon: -87.6862, country: "United States" },
+	{ name: "Bridgeport", id: 1840004836, lat: 41.1918, lon: -73.1953, country: "United States" },
+	{ name: "Mexico City", id: 1484247881, lat:19.4333, lon: -99.1333 , country: "Mexico" },
+	{ name: "Karachi", id: 1586129469, lat:24.8600, lon: 67.0100 , country: "Pakistan" },
+	{ name: "London", id: 1826645935, lat:51.5072, lon: -0.1275 , country: "United Kingdom" },
+	{ name: "Boston", id: 1840000455, lat:42.3188, lon: -71.0846 , country: "United States" },
+	{ name: "Taichung", id: 1158689622, lat:24.1500, lon: 120.6667 , country: "Taiwan" },
+]
+
+
+const geo = new THREE.RingGeometry( 0.1, 0.13, 32 );
+const mat = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide } );
+const ring = new THREE.Mesh( geo, mat );
+scene.add( ring );
+
+let lerpTarget
+
+const citySelect = document.getElementsByClassName('citySelect')[0]
+citySelect.innerHTML = cities.map( city => `<option class="city-option" value="${city.id}">${city.name}</option>`)
+citySelect.addEventListener( 'change', (event) => {
+	const cityId = event.target.value
+	const seletedCity = cities.find(city => city.id+'' === cityId)
+	const worldPosition = lonLauToWorkd(seletedCity.lon, seletedCity.lat, 4.4)
+	ring.position.set(worldPosition.x, -worldPosition.z, -worldPosition.y)
+	const center = new THREE.Vector3(0,0,0)
+	ring.lookAt(center)
+	// lerpTarget = new THREE.Vector3(0,0,0).set(...ring.position.toArray()).multiplyScalar(3)
+	camera.position.set(...ring.position.toArray()).multiplyScalar(3)
+	control.update()
+})
+
 function animate() {
 	requestAnimationFrame(animate);
 	renderer.render(scene, camera);
-	earth.rotation.y += 0.005
-	cloud.rotation.y += 0.004
+	// earth.rotation.y += 0.005
+	cloud.rotation.y += 0.0005
 	skydome.rotation.y += 0.001
-
+	if (lerpTarget) {
+		// camera.position.lerp(lerpTarget, 0.05).normalize().multiplyScalar(20)
+		control.update()
+	}
 }
 animate();
+
+const lonLauToWorkd = (lon, lat, rad = 50) => {
+	const pi = Math.PI
+	return llarToWorld(pi * (0 - lat) / 180, pi * (lon / 180), 1, rad)
+}
+
+const llarToWorld = (lat, lon, alt, rad) => {
+
+	const atan = Math.atan
+	const tan = Math.tan
+	const cos = Math.cos
+	const sin = Math.sin
+	let x
+	let y
+	let z
+	let f = 0
+	let ls = atan((1 - f) ** 2 * tan(lat))
+
+	x = rad * cos(ls) * cos(lon) + alt * cos(lat) * cos(lon)
+	y = rad * cos(ls) * sin(lon) + alt * cos(lat) * sin(lon)
+	z = rad * sin(ls) + alt * sin(lat)
+	return new THREE.Vector3(x, y, z)
+}
+
 
