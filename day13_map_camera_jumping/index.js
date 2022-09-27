@@ -10,14 +10,18 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// 匯入材質
-// image source: https://www.deviantart.com/kirriaa/art/Free-star-sky-HDRI-spherical-map-719281328
-const skydomeTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/free_star_sky_hdri_spherical_map_by_kirriaa_dbw8p0w%20(1).jpg')
-// 帶入材質，設定內外面
-const skydomeMaterial = new THREE.MeshBasicMaterial({ map: skydomeTexture, side: THREE.DoubleSide })
-const skydomeGeometry = new THREE.SphereGeometry(100, 50, 50)
-const skydome = new THREE.Mesh(skydomeGeometry, skydomeMaterial);
-scene.add(skydome);
+
+const sreateSkydome = () => {
+	// 匯入材質
+	// image source: https://www.deviantart.com/kirriaa/art/Free-star-sky-HDRI-spherical-map-719281328
+	const skydomeTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/free_star_sky_hdri_spherical_map_by_kirriaa_dbw8p0w%20(1).jpg')
+	// 帶入材質，設定內外面
+	const skydomeMaterial = new THREE.MeshBasicMaterial({ map: skydomeTexture, side: THREE.DoubleSide })
+	const skydomeGeometry = new THREE.SphereGeometry(100, 50, 50)
+	const skydome = new THREE.Mesh(skydomeGeometry, skydomeMaterial);
+	scene.add(skydome);
+	return skydome
+}
 
 // 新增環境光
 const addAmbientLight = () => {
@@ -65,50 +69,59 @@ addPointLight()
 addAmbientLight()
 addDirectionalLight()
 
-const earthGeometry = new THREE.SphereGeometry(5, 600, 600)
-const earthTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthmap2k.jpg')
-// 灰階高度貼圖
-const displacementTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/editedBump.jpg')
-const roughtnessTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthspec2kReversedLighten.png')
-const speculatMapTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthspec2k.jpg')
-const bumpTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthbump2k.jpg')
+const createEarth = () => {
+	const earthGeometry = new THREE.SphereGeometry(5, 600, 600)
+	const earthTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthmap2k.jpg')
+	// 灰階高度貼圖
+	const displacementTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/editedBump.jpg')
+	const roughtnessTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthspec2kReversedLighten.png')
+	const speculatMapTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthspec2k.jpg')
+	const bumpTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthbump2k.jpg')
+	
+	
+	const earthMaterial = new THREE.MeshStandardMaterial({
+		map: earthTexture,
+		side: THREE.DoubleSide,
+		roughnessMap: roughtnessTexture,
+		roughness: 0.9,
+		// 將貼圖貼到材質參數中
+		metalnessMap: speculatMapTexture,
+		metalness: 1,
+		displacementMap: displacementTexture,
+		displacementScale: 0.5,
+		bumpMap: bumpTexture,
+		bumpScale: 0.1,
+	})
+	const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+	scene.add(earth);
+	return earth
+}
 
+const createCloud = () => {
+	const cloudGeometry = new THREE.SphereGeometry(5.4, 60, 60)
+	// 匯入材質
+	// texture source: http://planetpixelemporium.com/earth8081.html
+	const cloudTransparency = new THREE.TextureLoader().load('8081_earthhiresclouds4K.jpg')
+	// 帶入材質，設定內外面
+	const cloudMaterial = new THREE.MeshStandardMaterial({
+		transparent: true,
+		opacity: 1,
+		alphaMap: cloudTransparency
+	})
+	const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
+	scene.add(cloud);
+	return cloud
+}
 
-const earthMaterial = new THREE.MeshStandardMaterial({
-	map: earthTexture,
-	side: THREE.DoubleSide,
-	roughnessMap: roughtnessTexture,
-	roughness: 0.9,
-	// 將貼圖貼到材質參數中
-	metalnessMap: speculatMapTexture,
-	metalness: 1,
-	displacementMap: displacementTexture,
-	displacementScale: 0.5,
-	bumpMap: bumpTexture,
-	bumpScale: 0.1,
-})
-const earth = new THREE.Mesh(earthGeometry, earthMaterial);
-scene.add(earth);
+const createRing = () => {
+	const geo = new THREE.RingGeometry( 0.1, 0.13, 32 );
+	const mat = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide } );
+	const ring = new THREE.Mesh( geo, mat );
+	scene.add( ring );
+	return ring
+}
 
-const cloudGeometry = new THREE.SphereGeometry(5.4, 60, 60)
-// 匯入材質
-// texture source: http://planetpixelemporium.com/earth8081.html
-const cloudTransparency = new THREE.TextureLoader().load('8081_earthhiresclouds4K.jpg')
-// 帶入材質，設定內外面
-const cloudMaterial = new THREE.MeshStandardMaterial({
-	transparent: true,
-	opacity: 1,
-	alphaMap: cloudTransparency
-})
-const cloud = new THREE.Mesh(cloudGeometry, cloudMaterial);
-scene.add(cloud);
-
-
-// 帶入鏡頭跟renderer.domElement實例化它即可
 const control = new OrbitControls(camera, renderer.domElement);
-
-const axesHelper = new THREE.AxesHelper(5);
-scene.add(axesHelper);
 
 const cities = [
 	{ name: "--- select city ---", id: 0, lat: 0, lon: 0, country: "None" },
@@ -124,12 +137,6 @@ const cities = [
 	{ name: "Boston", id: 1840000455, lat:42.3188, lon: -71.0846 , country: "United States" },
 	{ name: "Taichung", id: 1158689622, lat:24.1500, lon: 120.6667 , country: "Taiwan" },
 ]
-
-
-const geo = new THREE.RingGeometry( 0.1, 0.13, 32 );
-const mat = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide } );
-const ring = new THREE.Mesh( geo, mat );
-scene.add( ring );
 
 let lerpTarget
 let lerpPropical = new THREE.Vector3(0,0,0)
@@ -151,10 +158,14 @@ citySelect.addEventListener( 'change', (event) => {
 	control.update()
 })
 
+const skydome = sreateSkydome()
+const earth = createEarth()
+const cloud = createCloud()
+const ring = createRing()
+
 function animate() {
 	requestAnimationFrame(animate);
 	renderer.render(scene, camera);
-	// earth.rotation.y += 0.005
 	cloud.rotation.y += 0.0005
 	skydome.rotation.y += 0.001
 	if (lerpTarget) {
@@ -167,8 +178,9 @@ function animate() {
 }
 animate();
 
-const lonLauToRadian = (lon, lat, rad = 50) => llaToEcef(Math.PI * (0 - lat) / 180, Math.PI * (lon / 180), 1, rad)
-
+// 經緯度轉換成弧度
+const lonLauToRadian = (lon, lat, rad) => llaToEcef(Math.PI * (0 - lat) / 180, Math.PI * (lon / 180), 1, rad)
+// 城市弧度轉換成世界座標
 const llaToEcef = (lat, lon, alt, rad) => {
 	let f = 0
 	let ls = Math.atan((1 - f) ** 2 * Math.tan(lat))
