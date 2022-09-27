@@ -1,5 +1,8 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'https://unpkg.com/three@latest/examples/jsm/controls/OrbitControls.js';
+import { FontLoader } from 'https://unpkg.com/three@latest/examples/jsm/loaders/FontLoader.js';
+import { TextGeometry } from 'https://unpkg.com/three@latest/examples/jsm/geometries/TextGeometry.js';
+
 
 const scene = new THREE.Scene();
 
@@ -10,6 +13,8 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+const loader = new FontLoader();
+loader.load( 'jf-openhuninn-1.1_Regular_cities.json', function ( font ) {
 
 const addSkydome = () => {
 	// 匯入材質
@@ -124,23 +129,43 @@ const addRing = () => {
 const control = new OrbitControls(camera, renderer.domElement);
 
 const cities = [
-	{ name: "--- select city ---", id: 0, lat: 0, lon: 0, country: "None" },
-	{ name: "Mumbai", id: 1356226629, lat: 19.0758, lon: 72.8775, country: "India" },
-	{ name: "Moscow", id: 1643318494, lat: 55.7558, lon: 37.6178, country: "Russia" },
-	{ name: "Xiamen", id: 1156212809, lat: 24.4797, lon: 118.0819, country: "China" },
-	{ name: "Phnom Penh", id: 1116260534, lat: 11.5696, lon: 104.9210, country: "Cambodia" },
-	{ name: "Chicago", id: 1840000494, lat: 41.8373, lon: -87.6862, country: "United States" },
-	{ name: "Bridgeport", id: 1840004836, lat: 41.1918, lon: -73.1953, country: "United States" },
-	{ name: "Mexico City", id: 1484247881, lat:19.4333, lon: -99.1333 , country: "Mexico" },
-	{ name: "Karachi", id: 1586129469, lat:24.8600, lon: 67.0100 , country: "Pakistan" },
-	{ name: "London", id: 1826645935, lat:51.5072, lon: -0.1275 , country: "United Kingdom" },
-	{ name: "Boston", id: 1840000455, lat:42.3188, lon: -71.0846 , country: "United States" },
-	{ name: "Taichung", id: 1158689622, lat:24.1500, lon: 120.6667 , country: "Taiwan" },
+	{ name: "--- 選擇城市 ---", id: 0, lat: 0, lon: 0, country: "無" },
+	{ name: "孟買", id: 1356226629, lat: 19.0758, lon: 72.8775, country: "印度" },
+	{ name: "莫斯科", id: 1643318494, lat: 55.7558, lon: 37.6178, country: "俄羅斯" },
+	{ name: "廈門", id: 1156212809, lat: 24.4797, lon: 118.0819, country: "中國" },
+	{ name: "金邊", id: 1116260534, lat: 11.5696, lon: 104.9210, country: "柬埔寨" },
+	{ name: "芝加哥", id: 1840000494, lat: 41.8373, lon: -87.6862, country: "美國" },
+	{ name: "布里奇波特", id: 1840004836, lat: 41.1918, lon: -73.1953, country: "美國" },
+	{ name: "墨西哥市", id: 1484247881, lat:19.4333, lon: -99.1333 , country: "墨西哥" },
+	{ name: "卡拉奇", id: 1586129469, lat:24.8600, lon: 67.0100 , country: "巴基斯坦" },
+	{ name: "倫敦", id: 1826645935, lat:51.5072, lon: -0.1275 , country: "英國" },
+	{ name: "波士頓", id: 1840000455, lat:42.3188, lon: -71.0846 , country: "美國" },
+	{ name: "台中", id: 1158689622, lat:24.1500, lon: 120.6667 , country: "台灣" },
 ]
+
+const addText = text => {
+	const textGeometry = new TextGeometry( text, {
+		font: font,
+		size: 0.2,
+		height: 0.01,
+		curveSegments: 2,
+		bevelEnabled: false,
+		bevelThickness: 10,
+		bevelSize: 0,
+		bevelOffset: 0,
+		bevelSegments: 1
+	} );
+	const textMaterial = new THREE.MeshBasicMaterial({color: 0xffff00})
+	text = new THREE.Mesh(textGeometry, textMaterial)
+	text.geometry.translate(0.2,0,0)
+	scene.add(text)
+	return text
+}
 
 let lerpTarget
 let lerpPropical = new THREE.Vector3(0,0,0)
 let tropical
+let text = addText('hello')
 
 const citySelect = document.getElementsByClassName('citySelect')[0]
 citySelect.innerHTML = cities.map( city => `<option value="${city.id}">${city.name}</option>`)
@@ -148,9 +173,13 @@ citySelect.addEventListener( 'change', (event) => {
 	const cityId = event.target.value
 	const seletedCity = cities.find(city => city.id+'' === cityId)
 	const cityEciPosition = lonLauToRadian(seletedCity.lon, seletedCity.lat, 4.4)
-	ring.position.set(cityEciPosition.x, -cityEciPosition.z, -cityEciPosition.y)
-	const center = new THREE.Vector3(0,0,0)
-	ring.lookAt(center)
+	const spaceAboveCity = cityEciPosition.clone().multiplyScalar(2)
+	ring.position.set(...cityEciPosition.toArray())
+	ring.lookAt(spaceAboveCity)
+	text.removeFromParent()
+	text = addText(seletedCity.name)
+	text.position.set(...cityEciPosition.toArray())
+	text.lookAt(spaceAboveCity)
 	tropical = 1
 	lerpTarget = new THREE.Vector3(0,0,0).set(...ring.position.toArray()).multiplyScalar(3)
 	lerpPropical.set(...camera.position.toArray())
@@ -163,6 +192,7 @@ const earth = addEarth()
 const cloud = addCloud()
 const ring = addRing()
 
+
 function animate() {
 	requestAnimationFrame(animate);
 	renderer.render(scene, camera);
@@ -171,8 +201,10 @@ function animate() {
 	if (lerpTarget) {
 		lerpPropical.lerp(lerpTarget, 0.05).normalize().multiplyScalar(20)
 		let value = Math.pow(tropical*2-1, 4.)
-		camera.position.set(lerpPropical.x, lerpPropical.y*(value), lerpPropical.z).normalize().multiplyScalar(20)
-		control.update()
+		if (tropical>=0.01) {
+			camera.position.set(lerpPropical.x, lerpPropical.y*(value), lerpPropical.z).normalize().multiplyScalar(20)
+			control.update()
+		}
 	}
 	tropical*=0.97
 }
@@ -187,7 +219,7 @@ const llaToEcef = (lat, lon, alt, rad) => {
 	let x = rad * Math.cos(ls) * Math.cos(lon) + alt * Math.cos(lat) * Math.cos(lon)
 	let y = rad * Math.cos(ls) * Math.sin(lon) + alt * Math.cos(lat) * Math.sin(lon)
 	let z = rad * Math.sin(ls) + alt * Math.sin(lat)
-	return new THREE.Vector3(x, y, z)
+	return new THREE.Vector3(x, -z, -y)
 }
 
-
+})
