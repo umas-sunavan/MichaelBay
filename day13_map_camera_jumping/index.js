@@ -11,7 +11,7 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 
-const sreateSkydome = () => {
+const addSkydome = () => {
 	// 匯入材質
 	// image source: https://www.deviantart.com/kirriaa/art/Free-star-sky-HDRI-spherical-map-719281328
 	const skydomeTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/free_star_sky_hdri_spherical_map_by_kirriaa_dbw8p0w%20(1).jpg')
@@ -69,7 +69,7 @@ addPointLight()
 addAmbientLight()
 addDirectionalLight()
 
-const createEarth = () => {
+const addEarth = () => {
 	const earthGeometry = new THREE.SphereGeometry(5, 600, 600)
 	const earthTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthmap2k.jpg')
 	// 灰階高度貼圖
@@ -97,7 +97,7 @@ const createEarth = () => {
 	return earth
 }
 
-const createCloud = () => {
+const addCloud = () => {
 	const cloudGeometry = new THREE.SphereGeometry(5.4, 60, 60)
 	// 匯入材質
 	// texture source: http://planetpixelemporium.com/earth8081.html
@@ -113,7 +113,7 @@ const createCloud = () => {
 	return cloud
 }
 
-const createRing = () => {
+const addRing = () => {
 	const geo = new THREE.RingGeometry( 0.1, 0.13, 32 );
 	const mat = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide } );
 	const ring = new THREE.Mesh( geo, mat );
@@ -158,10 +158,10 @@ citySelect.addEventListener( 'change', (event) => {
 	control.update()
 })
 
-const skydome = sreateSkydome()
-const earth = createEarth()
-const cloud = createCloud()
-const ring = createRing()
+const skydome = addSkydome()
+const earth = addEarth()
+const cloud = addCloud()
+const ring = addRing()
 
 function animate() {
 	requestAnimationFrame(animate);
