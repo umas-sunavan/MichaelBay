@@ -156,18 +156,22 @@ const addText = text => {
 		bevelSegments: 1
 	} );
 	const textMaterial = new THREE.MeshBasicMaterial({color: 0xffff00})
-	text = new THREE.Mesh(textGeometry, textMaterial)
-	text.geometry.translate(0.2,0,0)
-	scene.add(text)
-	return text
+	const textMesh = new THREE.Mesh(textGeometry, textMaterial)
+	console.log(text.length);
+	textMesh.geometry.translate(text.length*-0.15,0.2,0)
+	scene.add(textMesh)
+	
+	return textMesh
 }
 
 let lerpTarget
 let lerpPropical = new THREE.Vector3(0,0,0)
 let tropical
-let text = addText('hello')
+let text = addText('')
+let htmlCityLegend = document.getElementsByClassName('city-legend')[0]
+console.log(htmlCityLegend);
 
-const citySelect = document.getElementsByClassName('citySelect')[0]
+const citySelect = document.getElementsByClassName('city-select')[0]
 citySelect.innerHTML = cities.map( city => `<option value="${city.id}">${city.name}</option>`)
 citySelect.addEventListener( 'change', (event) => {
 	const cityId = event.target.value
@@ -176,14 +180,17 @@ citySelect.addEventListener( 'change', (event) => {
 	const spaceAboveCity = cityEciPosition.clone().multiplyScalar(2)
 	ring.position.set(...cityEciPosition.toArray())
 	ring.lookAt(spaceAboveCity)
-	text.removeFromParent()
-	text = addText(seletedCity.name)
-	text.position.set(...cityEciPosition.toArray())
+	// text.removeFromParent()
+	// text = addText(seletedCity.name)
+	text.position.lerp(spaceAboveCity, 0.55)
 	text.lookAt(spaceAboveCity)
 	tropical = 1
+
 	lerpTarget = new THREE.Vector3(0,0,0).set(...ring.position.toArray()).multiplyScalar(3)
 	lerpPropical.set(...camera.position.toArray())
 	// camera.position.set(...ring.position.toArray()).multiplyScalar(3)
+	htmlCityLegend.setAttribute('style', `display:none;position:absolute;`)
+	htmlCityLegend.innerHTML = seletedCity.name
 	control.update()
 })
 
@@ -192,6 +199,15 @@ const earth = addEarth()
 const cloud = addCloud()
 const ring = addRing()
 
+const getPixelPosition = (ndcPosition) => {
+	const ndcX = ndcPosition.x
+	const ndcY = ndcPosition.y
+	const width = window.innerWidth
+	const height = window.innerHeight
+	const windowX = (ndcX * 0.5 + 0.5) * width
+	const windowY = (ndcY * -0.5 + 0.5) * height
+	return new THREE.Vector2(windowX, windowY)
+}
 
 function animate() {
 	requestAnimationFrame(animate);
@@ -204,8 +220,15 @@ function animate() {
 		if (tropical>=0.01) {
 			camera.position.set(lerpPropical.x, lerpPropical.y*(value), lerpPropical.z).normalize().multiplyScalar(20)
 			control.update()
+			const ndcPosition = ring.position.clone().project(camera)
+			const canvasPosition = getPixelPosition(ndcPosition)
+			const dot = camera.position.clone().dot(ring.position)
+			if (dot>0){
+				htmlCityLegend.setAttribute('style', `position:absolute; color: yellow; transform: translate(${canvasPosition.x + 10}px, ${canvasPosition.y + 10}px);font-family: 'Noto Sans TC', sans-serif;`)
+			}
 		}
 	}
+	text.lookAt(...camera.position.toArray())
 	tropical*=0.97
 }
 animate();
