@@ -3,20 +3,7 @@ import { OrbitControls } from 'https://unpkg.com/three@latest/examples/jsm/contr
 import { FontLoader } from 'https://unpkg.com/three@latest/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'https://unpkg.com/three@latest/examples/jsm/geometries/TextGeometry.js';
 
-
-const scene = new THREE.Scene();
-
-const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 10, 15)
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
-
-const loader = new FontLoader();
-loader.load( 'jf-openhuninn-1.1_Regular_cities.json', function ( font ) {
-
-const addSkydome = () => {
+export const addSkydome = (scene) => {
 	// 匯入材質
 	// image source: https://www.deviantart.com/kirriaa/art/Free-star-sky-HDRI-spherical-map-719281328
 	const skydomeTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/free_star_sky_hdri_spherical_map_by_kirriaa_dbw8p0w%20(1).jpg')
@@ -29,26 +16,25 @@ const addSkydome = () => {
 }
 
 // 新增環境光
-const addAmbientLight = () => {
+export const addAmbientLight = (scene) => {
 	const light = new THREE.AmbientLight(0xffffff, 0.5)
 	scene.add(light)
 }
 
 // 新增點光
-const addPointLight = () => {
+export const addPointLight = (scene) => {
 	const pointLight = new THREE.PointLight(0xffffff, 1)
 	scene.add(pointLight);
 	pointLight.position.set(10, 10, -10)
 	pointLight.castShadow = true
 	// 新增Helper
 	const lightHelper = new THREE.PointLightHelper(pointLight, 5, 0xffff00)
-	// scene.add(lightHelper);
 	// 更新Helper
 	lightHelper.update();
 }
 
 // 新增平行光
-const addDirectionalLight = () => {
+export const addDirectionalLight = (scene) => {
 	const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
 	directionalLight.position.set(0, 0, 10)
 	scene.add(directionalLight);
@@ -70,11 +56,7 @@ const addDirectionalLight = () => {
 	lightHelper.update();
 }
 
-addPointLight()
-addAmbientLight()
-addDirectionalLight()
-
-const addEarth = () => {
+export const addEarth = (scene) => {
 	const earthGeometry = new THREE.SphereGeometry(5, 600, 600)
 	const earthTexture = new THREE.TextureLoader().load('https://storage.googleapis.com/umas_public_assets/michaelBay/day10/8081_earthmap2k.jpg')
 	// 灰階高度貼圖
@@ -102,7 +84,7 @@ const addEarth = () => {
 	return earth
 }
 
-const addCloud = () => {
+export const addCloud = (scene) => {
 	const cloudGeometry = new THREE.SphereGeometry(5.4, 60, 60)
 	// 匯入材質
 	// texture source: http://planetpixelemporium.com/earth8081.html
@@ -118,7 +100,7 @@ const addCloud = () => {
 	return cloud
 }
 
-const addRing = () => {
+export const addRing = (scene) => {
 	const geo = new THREE.RingGeometry( 0.1, 0.13, 32 );
 	const mat = new THREE.MeshBasicMaterial( { color: 0xffff00, side: THREE.DoubleSide } );
 	const ring = new THREE.Mesh( geo, mat );
@@ -126,9 +108,7 @@ const addRing = () => {
 	return ring
 }
 
-const control = new OrbitControls(camera, renderer.domElement);
-
-const cities = [
+export const cities = [
 	{ name: "--- 選擇城市 ---", id: 0, lat: 0, lon: 0, country: "無" },
 	{ name: "孟買", id: 1356226629, lat: 19.0758, lon: 72.8775, country: "印度" },
 	{ name: "莫斯科", id: 1643318494, lat: 55.7558, lon: 37.6178, country: "俄羅斯" },
@@ -143,7 +123,7 @@ const cities = [
 	{ name: "台中", id: 1158689622, lat:24.1500, lon: 120.6667 , country: "台灣" },
 ]
 
-const addText = text => {
+export const addText = text => {
 	const textGeometry = new TextGeometry( text, {
 		font: font,
 		size: 0.2,
@@ -164,42 +144,7 @@ const addText = text => {
 	return textMesh
 }
 
-let lerpTarget
-let lerpPropical = new THREE.Vector3(0,0,0)
-let tropical
-let text = addText('')
-let htmlCityLegend = document.getElementsByClassName('city-legend')[0]
-console.log(htmlCityLegend);
-
-const citySelect = document.getElementsByClassName('city-select')[0]
-citySelect.innerHTML = cities.map( city => `<option value="${city.id}">${city.name}</option>`)
-citySelect.addEventListener( 'change', (event) => {
-	const cityId = event.target.value
-	const seletedCity = cities.find(city => city.id+'' === cityId)
-	const cityEciPosition = lonLauToRadian(seletedCity.lon, seletedCity.lat, 4.4)
-	const spaceAboveCity = cityEciPosition.clone().multiplyScalar(2)
-	ring.position.set(...cityEciPosition.toArray())
-	ring.lookAt(spaceAboveCity)
-	// text.removeFromParent()
-	// text = addText(seletedCity.name)
-	text.position.lerp(spaceAboveCity, 0.55)
-	text.lookAt(spaceAboveCity)
-	tropical = 1
-
-	lerpTarget = new THREE.Vector3(0,0,0).set(...ring.position.toArray()).multiplyScalar(3)
-	lerpPropical.set(...camera.position.toArray())
-	// camera.position.set(...ring.position.toArray()).multiplyScalar(3)
-	htmlCityLegend.setAttribute('style', `display:none;position:absolute;`)
-	htmlCityLegend.innerHTML = seletedCity.name
-	control.update()
-})
-
-const skydome = addSkydome()
-const earth = addEarth()
-const cloud = addCloud()
-const ring = addRing()
-
-const getPixelPosition = (ndcPosition) => {
+export const getPixelPosition = (ndcPosition) => {
 	const ndcX = ndcPosition.x
 	const ndcY = ndcPosition.y
 	const width = window.innerWidth
@@ -209,34 +154,10 @@ const getPixelPosition = (ndcPosition) => {
 	return new THREE.Vector2(windowX, windowY)
 }
 
-function animate() {
-	requestAnimationFrame(animate);
-	renderer.render(scene, camera);
-	cloud.rotation.y += 0.0005
-	skydome.rotation.y += 0.001
-	if (lerpTarget) {
-		lerpPropical.lerp(lerpTarget, 0.05).normalize().multiplyScalar(20)
-		let value = Math.pow(tropical*2-1, 4.)
-		if (tropical>=0.01) {
-			camera.position.set(lerpPropical.x, lerpPropical.y*(value), lerpPropical.z).normalize().multiplyScalar(20)
-			control.update()
-			const ndcPosition = ring.position.clone().project(camera)
-			const canvasPosition = getPixelPosition(ndcPosition)
-			const dot = camera.position.clone().dot(ring.position)
-			if (dot>0){
-				htmlCityLegend.setAttribute('style', `position:absolute; color: yellow; transform: translate(${canvasPosition.x + 10}px, ${canvasPosition.y + 10}px);font-family: 'Noto Sans TC', sans-serif;`)
-			}
-		}
-	}
-	text.lookAt(...camera.position.toArray())
-	tropical*=0.97
-}
-animate();
-
 // 經緯度轉換成弧度
-const lonLauToRadian = (lon, lat, rad) => llaToEcef(Math.PI * (0 - lat) / 180, Math.PI * (lon / 180), 1, rad)
+export const lonLauToRadian = (lon, lat, rad) => llaToEcef(Math.PI * (0 - lat) / 180, Math.PI * (lon / 180), 1, rad)
 // 城市弧度轉換成世界座標
-const llaToEcef = (lat, lon, alt, rad) => {
+export const llaToEcef = (lat, lon, alt, rad) => {
 	let f = 0
 	let ls = Math.atan((1 - f) ** 2 * Math.tan(lat))
 	let x = rad * Math.cos(ls) * Math.cos(lon) + alt * Math.cos(lat) * Math.cos(lon)
@@ -244,5 +165,3 @@ const llaToEcef = (lat, lon, alt, rad) => {
 	let z = rad * Math.sin(ls) + alt * Math.sin(lat)
 	return new THREE.Vector3(x, -z, -y)
 }
-
-})
