@@ -15,6 +15,10 @@ document.body.appendChild( renderer.domElement );
 // 在camera, renderer宣後之後加上這行
 const control = new OrbitControls(camera, renderer.domElement);
 
+camera.position.set(0, -500, 900)
+control.target.set(250,-250,0)
+control.update()
+
 // 新增環境光
 const addAmbientLight = () => {
 	const light = new THREE.AmbientLight(0xffffff, 0.6)
@@ -67,6 +71,35 @@ const loadPathsFromSvg = async () => {
 
 (async () => {
 	const paths = await loadPathsFromSvg()
+	const group = new THREE.Group();
+	paths.forEach( path => {
+		const parentName = path.userData.node.parentNode.id;
+		const name = path.userData.node.id || parentName
+		console.log(path, name);
+		const material = new THREE.MeshStandardMaterial({
+			color: path.color,
+			side: THREE.DoubleSide,
+		});	
+		const shapes = SVGLoader.createShapes(path);
+		for (let j = 0; j < shapes.length; j++) {
+			const shape = shapes[j];
+			shape
+			const geometry = new THREE.ExtrudeGeometry(shape, {
+				depth: 20,
+				steps: 1,
+				bevelEnabled: false,
+				bevelThickness: 0.2,
+				bevelSize: 0.2,
+				bevelOffset: 0,
+				bevelSegments: 6
+			});
+			const mesh = new THREE.Mesh(geometry, material);
+			group.add(mesh);
+			mesh.name = name
+		}
+	})
+	group.rotateX(Math.PI)
+	scene.add(group);
 	console.log(paths);
 })()
 
