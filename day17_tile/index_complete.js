@@ -105,7 +105,7 @@ const addTile = async () => {
 	scene.add(tile)
 }
 
-addTile()
+// addTile()
 
 // instantiate a loader
 const loader = new SVGLoader();
@@ -158,7 +158,7 @@ const addExtrde = async () => {
 	scene.add(group);
 }
 
-// addExtrde()
+addExtrde()
 
 
 scene.background = new THREE.Color(0xf2f2f2)
