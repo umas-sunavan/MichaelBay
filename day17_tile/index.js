@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { OrbitControls } from 'https://unpkg.com/three@latest/examples/jsm/controls/OrbitControls.js';
+import { SVGLoader } from 'https://unpkg.com/three@latest/examples/jsm/loaders/SVGLoader.js';
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf2f2f2)
@@ -56,6 +58,17 @@ const data = [
 	{ rate: 9.0, name: '澎湖' },
 ]
 
+const loadPathsFromSvg = async () => {
+	const loader = new SVGLoader();
+	const svgData = await loader.loadAsync('taiwan.svg')
+	const paths = svgData.paths;
+	return paths
+}
+
+(async () => {
+	const paths = await loadPathsFromSvg()
+	console.log(paths);
+})()
 
 function animate() {
 	requestAnimationFrame( animate );
