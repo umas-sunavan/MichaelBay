@@ -69,7 +69,7 @@ const loadPathsFromSvg = async () => {
 	return paths
 }
 
-const extrudeFromPath = (path, name, group) => {
+const extrudeFromPath = (path, name, group, rate) => {
 	const material = new THREE.MeshStandardMaterial({
 		color: path.color,
 		side: THREE.DoubleSide,
@@ -78,7 +78,7 @@ const extrudeFromPath = (path, name, group) => {
 	for (let j = 0; j < shapes.length; j++) {
 		const shape = shapes[j];
 		const geometry = new THREE.ExtrudeGeometry(shape, {
-			depth: 20,
+			depth: -rate,
 			steps: 1,
 			bevelEnabled: false,
 			bevelThickness: 0.2,
@@ -99,11 +99,13 @@ const extrudeFromPath = (path, name, group) => {
 		const parentName = path.userData.node.parentNode.id;
 		const name = path.userData.node.id || parentName
 		console.log(path, name);
-		extrudeFromPath(path, name, group)
+		const dataRaw = data.find(row => row.name === name)
+		const rate = dataRaw.rate
+		extrudeFromPath(path, name, group, rate)
 	})
 	group.rotateX(Math.PI)
 	scene.add(group);
-	console.log(paths);
+
 })()
 
 function animate() {
