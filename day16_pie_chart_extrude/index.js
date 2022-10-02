@@ -3,22 +3,39 @@ import { OrbitControls } from 'https://unpkg.com/three@latest/examples/jsm/contr
 import { FontLoader } from 'https://unpkg.com/three@latest/examples/jsm/loaders/FontLoader.js';
 import { TextGeometry } from 'https://unpkg.com/three@latest/examples/jsm/geometries/TextGeometry.js';
 const loader = new FontLoader();
-loader.load( 'jf-openhuninn-1.1_Regular_cities.json', function ( font ) {
+loader.load( 'https://storage.googleapis.com/umas_public_assets/michaelBay/day13/jf-openhuninn-1.1_Regular_cities.json', function ( font ) {
 
 const scene = new THREE.Scene();
+
+const addText = (text, color) => {
+	const textGeometry = new TextGeometry( text, {
+		font: font,
+		size: 0.5,
+		height: 0,
+		curveSegments: 2,
+		bevelEnabled: false,
+	} );
+	const textMaterial = new THREE.MeshBasicMaterial({color: color})
+	const textMesh = new THREE.Mesh(textGeometry, textMaterial)
+	scene.add(textMesh)
+	return textMesh
+}
+
 const windowRatio = window.innerWidth / window.innerHeight
 const camera = new THREE.OrthographicCamera(-windowRatio * 10, windowRatio * 10, 10, -10, 0.1,1000)
 camera.position.set(0, 3, 15)
 
+// 假設圖表拿到這筆資料
 const data = [
-	{rate: 14.2, name: '動力控制IC'},
-	{rate: 32.5, name: '電源管理IC'},
-	{rate: 9.6, name: '智慧型功率IC'},
-	{rate: 18.7, name: '二極體Diode'},
-	{rate: 21.6, name: '功率電晶體Power Transistor'},
-	{rate: 3.4, name: '閘流體Thyristor'},
+	{rate: 14.2, name: 'Advanced Digital Camera'},
+	{rate: 32.5, name: 'Full Frame Digital Camera'},
+	{rate: 9.6, name: 'Lens Adapter'},
+	{rate: 18.7, name: 'Slim Digital Camera'},
+	{rate: 21.6, name: 'Slr Digita Camera'},
+	{rate: 3.4, name: 'Macro Zoom Lens'},
 ]
 
+// 我準備了簡單的色票，作為圓餅圖顯示用的顏色
 const colorSet = [
 	0x729ECB,
 	0xA9ECD5,
@@ -31,7 +48,7 @@ const colorSet = [
 	0xA77968,
 ]
 
-const createPie = (startAngle, endAngle, color, depth, rate, name) => {
+const createPie = (startAngle, endAngle, color, depth, legend, rate) => {
 	const curve = new THREE.EllipseCurve(
 		0,0,
 		5,5,
@@ -39,54 +56,54 @@ const createPie = (startAngle, endAngle, color, depth, rate, name) => {
 		false,
 		0
 	)
-	console.log(rate);
-	const text = addText(rate + '', color)
-	
+	const text = addText(`${legend}: ${rate}%`, color)
 	const curvePoints = curve.getPoints(50)
 	const shape = new THREE.Shape(curvePoints)
 	shape.lineTo(0,0)
 	shape.closePath()
 	const shapeGeometry = new THREE.ExtrudeGeometry(shape, {
-		steps: 1,
 		depth: depth*2,
+		steps: 1,
 		bevelEnabled: true,
 		bevelThickness: 0.2,
 		bevelSize: 0.2,
 		bevelOffset: 0,
 		bevelSegments: 6
 	  })
-	  const middleAngle = (startAngle + endAngle) / 2
-      const theta = middleAngle
-      const x = Math.cos(theta)
-      const y = Math.sin(theta)
-	  text.geometry.translate(x*8.5,y*8.5,0)
-	  text.geometry.translate(x-3,y-1,0)
-      shapeGeometry.translate(x*0.2, y*0.2, 0)
-	const shapeMaterial = new THREE.MeshStandardMaterial({color: color})
+	const middleAngle = (startAngle + endAngle) / 2
+	const x = Math.cos(middleAngle)
+	const y = Math.sin(middleAngle)
+	const textDistance = 8
+	text.geometry.translate(x*textDistance,y*textDistance,0)
+	text.geometry.translate(x-([...`legend: ${rate}%`].length)*0.3,y,0)
+	shapeGeometry.translate(x*0.2, y*0.2, 0)
+	const shapeMaterial = new THREE.MeshStandardMaterial({color: color, wireframe:false})
 	const mesh = new THREE.Mesh(shapeGeometry, shapeMaterial)
-	return {pie: mesh, text}
+	scene.add(mesh)
+	return {pieMesh: mesh, pieText: text}
 }
 
-const createChart = (data) => {
+
+const dataToPie = (data) => {
 	let sum = 0
-	const group = new THREE.Group()
-	const texts = []
 	data = data.sort((a,b) => b.rate - a.rate)
+	const pieTexts = []
+	let pieMeshes = []
 	data.forEach( (datium,i) => {
-		const radian = datium.rate/100 * (π * 2)
-		const {pie, text} = createPie(sum, radian+sum, colorSet[i], radian, datium.rate, datium.name)
-		console.log(pie);
-		group.add(pie)
-		texts.push(text)
+		const radian = datium.rate/100 * (Math.PI * 2)
+		const {pieMesh, pieText} = createPie(sum, radian+sum, colorSet[i], radian, datium.name, datium.rate)
+		pieTexts.push(pieText)
+		pieMeshes.push(pieMesh)
 		sum+=radian
 	})
-	console.log(texts);
-	return {chart: group, texts}
+	return {pieMeshes, pieTexts}
 }
+
+const {pieMeshes, pieTexts} = dataToPie(data)
 
 // 新增環境光
 const addAmbientLight = () => {
-	const light = new THREE.AmbientLight(0xffffff, 0.9)
+	const light = new THREE.AmbientLight(0xffffff, 0.6)
 	scene.add(light)
 }
 
@@ -105,7 +122,7 @@ const addPointLight = () => {
 
 // 新增平行光
 const addDirectionalLight = () => {
-	const directionalLight = new THREE.DirectionalLight(0xffffff, 0.3)
+	const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
 	directionalLight.position.set(20, 20, 20)
 	scene.add(directionalLight);
 	directionalLight.castShadow = true
@@ -130,49 +147,21 @@ addAmbientLight()
 addDirectionalLight()
 // addPointLight()
 
-const addText = (text, color) => {
-	const textGeometry = new TextGeometry( text, {
-		font: font,
-		size: 2,
-		height: 0.01,
-		curveSegments: 6,
-		bevelEnabled: false,
-		bevelThickness: 10,
-		bevelSize: 0,
-		bevelOffset: 0,
-		bevelSegments: 1
-	} );
-	const textMaterial = new THREE.MeshBasicMaterial({color: color})
-	const textMesh = new THREE.Mesh(textGeometry, textMaterial)
-	scene.add(textMesh)
-	return textMesh
-}
 
-const renderer = new THREE.WebGLRenderer({antialias:true});
+const renderer = new THREE.WebGLRenderer({antialias: true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild( renderer.domElement );
+
+// 在camera, renderer宣後之後加上這行
 new OrbitControls(camera, renderer.domElement);
 
-const π = Math.PI
-
-
-const {chart, texts} = createChart(data)
-console.log(texts);
-
-// chart.rotateX(π/2 * -0.6)
-// chart.rotateY(π/2 * 0.2)
-
-scene.add(chart)
-
-
-scene.background = new THREE.Color(0xf9f9ef)
+scene.background = new THREE.Color(0xf9f9f9)
 function animate() {
-	texts.forEach( text => {
+	pieTexts.forEach( text => {
 		text.lookAt(...new THREE.Vector3(0,0,1).lerp(camera.position, 0.05).toArray())
 	})
 	requestAnimationFrame( animate );
 	renderer.render( scene, camera );
 }
 animate();
-
 })

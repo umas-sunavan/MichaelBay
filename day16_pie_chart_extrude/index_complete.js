@@ -82,12 +82,12 @@ new OrbitControls(camera, renderer.domElement);
 const π = Math.PI
 
 const data = [
-	{rate: 14.2, name: '動力控制IC'},
-	{rate: 32.5, name: '電源管理IC'},
-	{rate: 9.6, name: '智慧型功率IC'},
-	{rate: 18.7, name: '二極體Diode'},
-	{rate: 21.6, name: '功率電晶體Power Transistor'},
-	{rate: 3.4, name: '閘流體Thyristor'},
+	{rate: 14.2, name: 'Advanced Digital Camera'},
+	{rate: 32.5, name: 'Full Frame Digital Camera'},
+	{rate: 9.6, name: 'Lens Adapter'},
+	{rate: 18.7, name: 'Slim Digital Camera'},
+	{rate: 21.6, name: 'Slr Digita Camera'},
+	{rate: 3.4, name: 'Macro Zoom Lens'},
 ]
 
 const colorSet = [
