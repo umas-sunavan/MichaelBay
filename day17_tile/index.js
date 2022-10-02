@@ -5,7 +5,7 @@ import { SVGLoader } from 'https://unpkg.com/three@latest/examples/jsm/loaders/S
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xf2f2f2)
 
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
 camera.position.set(0, 3, 15)
 
 const renderer = new THREE.WebGLRenderer();
@@ -69,6 +69,29 @@ const loadPathsFromSvg = async () => {
 	return paths
 }
 
+const extrudeFromPath = (path, name, group) => {
+	const material = new THREE.MeshStandardMaterial({
+		color: path.color,
+		side: THREE.DoubleSide,
+	});	
+	const shapes = SVGLoader.createShapes(path);
+	for (let j = 0; j < shapes.length; j++) {
+		const shape = shapes[j];
+		const geometry = new THREE.ExtrudeGeometry(shape, {
+			depth: 20,
+			steps: 1,
+			bevelEnabled: false,
+			bevelThickness: 0.2,
+			bevelSize: 0.2,
+			bevelOffset: 0,
+			bevelSegments: 6
+		});
+		const mesh = new THREE.Mesh(geometry, material);
+		group.add(mesh);
+		mesh.name = name
+	}
+}
+
 (async () => {
 	const paths = await loadPathsFromSvg()
 	const group = new THREE.Group();
@@ -76,27 +99,7 @@ const loadPathsFromSvg = async () => {
 		const parentName = path.userData.node.parentNode.id;
 		const name = path.userData.node.id || parentName
 		console.log(path, name);
-		const material = new THREE.MeshStandardMaterial({
-			color: path.color,
-			side: THREE.DoubleSide,
-		});	
-		const shapes = SVGLoader.createShapes(path);
-		for (let j = 0; j < shapes.length; j++) {
-			const shape = shapes[j];
-			shape
-			const geometry = new THREE.ExtrudeGeometry(shape, {
-				depth: 20,
-				steps: 1,
-				bevelEnabled: false,
-				bevelThickness: 0.2,
-				bevelSize: 0.2,
-				bevelOffset: 0,
-				bevelSegments: 6
-			});
-			const mesh = new THREE.Mesh(geometry, material);
-			group.add(mesh);
-			mesh.name = name
-		}
+		extrudeFromPath(path, name, group)
 	})
 	group.rotateX(Math.PI)
 	scene.add(group);
