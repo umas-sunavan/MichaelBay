@@ -1,21 +1,17 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'https://unpkg.com/three@latest/examples/jsm/controls/OrbitControls.js';
-import { SVGLoader } from 'https://unpkg.com/three@latest/examples/jsm/loaders/SVGLoader.js';
-
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf2f2f2)
-
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
-camera.position.set(0, 3, 15)
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild( renderer.domElement );
 
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf2f2f2)
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+camera.position.set(0, -500, 900)
 // 在camera, renderer宣後之後加上這行
 const control = new OrbitControls(camera, renderer.domElement);
 
-camera.position.set(0, -500, 900)
 control.target.set(250,-250,0)
 control.update()
 
@@ -40,7 +36,7 @@ const addDirectionalLight = () => {
 
 	// 新增Helper
 	const lightHelper = new THREE.DirectionalLightHelper(directionalLight, 20, 0xffff00)
-	// scene.add(lightHelper);
+	scene.add(lightHelper);
 	// 更新位置
 	directionalLight.target.position.set(0, 0, 0);
 	directionalLight.target.updateMatrixWorld();
@@ -48,10 +44,7 @@ const addDirectionalLight = () => {
 	lightHelper.update();
 }
 
-addAmbientLight()
-addDirectionalLight()
-
-// 假設圖表拿到這筆資料
+// 假設GIS來源資料如下
 const data = [
 	{ rate: 14.2, name: '雲嘉' },
 	{ rate: 32.5, name: '中彰投' },
@@ -62,51 +55,42 @@ const data = [
 	{ rate: 9.0, name: '澎湖' },
 ]
 
-const loadPathsFromSvg = async () => {
-	const loader = new SVGLoader();
-	const svgData = await loader.loadAsync('taiwan.svg')
-	const paths = svgData.paths;
-	return paths
-}
+import { SVGLoader } from 'https://unpkg.com/three@latest/examples/jsm/loaders/SVGLoader.js';
 
-const extrudeFromPath = (path, name, group, rate) => {
-	const material = new THREE.MeshStandardMaterial({
-		color: path.color,
-		side: THREE.DoubleSide,
-	});	
-	const shapes = SVGLoader.createShapes(path);
-	for (let j = 0; j < shapes.length; j++) {
-		const shape = shapes[j];
-		const geometry = new THREE.ExtrudeGeometry(shape, {
-			depth: -rate,
-			steps: 1,
-			bevelEnabled: false,
-			bevelThickness: 0.2,
-			bevelSize: 0.2,
-			bevelOffset: 0,
-			bevelSegments: 6
-		});
-		const mesh = new THREE.Mesh(geometry, material);
-		group.add(mesh);
-		mesh.name = name
-	}
-}
+const loadPathsFromSvg = async () => await new SVGLoader().loadAsync('taiwan.svg');
 
 (async () => {
-	const paths = await loadPathsFromSvg()
+	const svgData = await loadPathsFromSvg()
+	const paths = svgData.paths
 	const group = new THREE.Group();
 	paths.forEach( path => {
 		const parentName = path.userData.node.parentNode.id;
 		const name = path.userData.node.id || parentName
-		console.log(path, name);
 		const dataRaw = data.find(row => row.name === name)
-		const rate = dataRaw.rate
-		extrudeFromPath(path, name, group, rate)
+		console.log(path, name);
+		const color = path.color
+		const material = new THREE.MeshStandardMaterial({
+			color,
+			side: THREE.DoubleSide,});	
+		const shapes = SVGLoader.createShapes(path);
+		shapes.forEach( shape => {
+			const geometry = new THREE.ExtrudeGeometry(shape, {
+				depth: -dataRaw.rate,
+				steps: 1,
+				bevelEnabled: false
+			});
+			const mesh = new THREE.Mesh(geometry, material);
+			group.add(mesh);
+		})
 	})
 	group.rotateX(Math.PI)
 	scene.add(group);
 
 })()
+
+addAmbientLight()
+addDirectionalLight()
+
 
 function animate() {
 	requestAnimationFrame( animate );
