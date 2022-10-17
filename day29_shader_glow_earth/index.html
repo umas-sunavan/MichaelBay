@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>My Website</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <main>
+        <div style="display: none">
+            <p id="fragmentShader">
+                uniform vec3 orbitcontrolPosition;
+                varying vec3 vertexNormal;
+                void main(void){
+                  float intensity = 1.05 - dot(vertexNormal, orbitcontrolPosition);
+                  vec3 atmosphere = vec3(.2, .4, .6) * pow(intensity*1.1, 2.);
+                  gl_FragColor=vec4(atmosphere,1.);
+                }
+            </p>
+            <p id="vertexShader">
+                varying vec3 vertexNormal;
+                void main(void){
+                  vertexNormal = normal;
+                  position + normal;
+                  gl_Position=projectionMatrix*modelViewMatrix*vec4(position, 1.0);
+                }
+            </p>
+        </div>
+
+    </main>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@latest/build/three.module.js"
+                }
+            }
+        </script>
+
+    <script type="module" src="index.js"></script>
+
+</body>
+
+</html>

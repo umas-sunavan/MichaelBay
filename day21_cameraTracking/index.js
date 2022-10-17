@@ -10,7 +10,7 @@ import { UnrealBloomPass } from 'https://unpkg.com/three@latest/examples/jsm/pos
 // console.log(MeshReflectorMaterial);
 const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 10000);
+const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 10000);
 camera.zoom = 0.4
 camera.updateProjectionMatrix();
 camera.position.set(7, 15, 20)
@@ -88,13 +88,14 @@ const addCabinetModels = async () => {
 }
 
 const addAgvModels = async () => {
-	const path = 'detailed_draft_xyz_homework/scene.gltf'
+	const path = 'https://storage.googleapis.com/umas_public_assets/michaelBay/day21/scene.gltf'
 	const gltf = await new GLTFLoader().loadAsync(path);
 	agv = gltf.scene
 	const pointLight = addPointLight(0,10 / 0.04,4 / 0.04, 0xffff00)
 	gltf.scene.traverse( object => {
 		if (object.isMesh) {
 			object.castShadow = true
+			object.receiveShadow = true
 		}
 	} )
 	agv.scale.set(0.04,0.04,0.04)
@@ -121,9 +122,10 @@ const addPointLight = (x,y,z,color = 0xffffff) => {
 	scene.add(pointLight);
 	pointLight.position.set(x,y,z)
 	pointLight.castShadow = true
+	pointLight.shadow.bias = -0.001
 	// 新增Helper
 	const lightHelper = new THREE.PointLightHelper(pointLight, 3, 0xffff00)
-	scene.add(lightHelper);
+	// scene.add(lightHelper);
 	// 更新Helper
 	lightHelper.update();
 	return pointLight
@@ -141,7 +143,7 @@ addPointLight(10, 18, 10)
 let fadingReflectorOptions = {
 	mixBlur: 2,
 	mixStrength: 1.5,
-	resolution: 2048,
+	resolution: 512,
 	blur: [0, 0],
 	minDepthThreshold: 0.7,
 	maxDepthThreshold: 2,
@@ -159,21 +161,12 @@ const addFadingMirror = (w, h) => {
 	const mat = new THREE.MeshStandardMaterial()
 	const mesh = new THREE.Mesh(geo, mat)
 	mesh.material = new MeshReflectorMaterial(renderer, camera, scene, mesh, fadingReflectorOptions);
-	scene.add(mesh);
-	return mesh;
-}
-
-const addPlane = (w, h) => {
-	const geo = new THREE.PlaneGeometry(w, h, 1, 1)
-	const mat = new THREE.MeshStandardMaterial()
-	const mesh = new THREE.Mesh(geo, mat)
 	mesh.receiveShadow = true
 	scene.add(mesh);
 	return mesh;
 }
 
 const fadingGround = addFadingMirror(120,120)
-// const fadingGround = addPlane(120,120)
 fadingGround.rotateX(Math.PI * -0.5)
 
 const fadingWallZN = addFadingMirror(120, 30)
@@ -195,28 +188,30 @@ fadingWallXP.translateY(15)
 fadingWallXP.translateX(59)
 fadingWallXP.rotateY(Math.PI * -0.5)
 
-const mouseOnDnc = new THREE.Vector3(0,0,0)
+let mouseOnWorld = new THREE.Vector3(0,0,0)
+const mouseOnNdc = new THREE.Vector3(0,0,-1)
+
 renderer.domElement.addEventListener( 'mousemove' ,event => {
 	const mouseX = event.offsetX
 	const w = renderer.domElement.width
 	const mouseY = event.offsetY
 	const h = renderer.domElement.height
-	mouseOnDnc.setX(mouseX/w-0.5)
-	mouseOnDnc.setY(-mouseY/h+0.5)
+	mouseOnNdc.setX(mouseX/w-0.5)
+	mouseOnNdc.setY(-mouseY/h+0.5)
 })
 
 const cameraFollowAvg = () => {
 	const length = agv.position.distanceTo(camera.position)
 	if (length > 20) {
 		const distance = new THREE.Vector3(0,0,0).subVectors(camera.position, agv.position)
-		const distantNormal = distance.normalize()
-		const followingPosition = distantNormal.multiplyScalar(20).add(new THREE.Vector3(2,0,2))
-		const lerping = new THREE.Vector3(0,0,0).addVectors(agv.position, followingPosition)
-		lerping.setY(15)
-		camera.position.lerp(lerping, 0.01)
+		distance.normalize()
+		distance.multiplyScalar(20)
+		distance.add(agv.position)
+		distance.setY(15)
+		distance.add(new THREE.Vector3(1,0,2))
+		camera.position.lerp(distance, 0.1)
 	}
 }
-
 const updateAvgPosition = (agv, time) => {
 	const zRoute = Math.cos(time) * 30
 	agv.position.set(0,0,zRoute)
@@ -230,28 +225,30 @@ const flickerLight = (time, light) => {
 	}
 }
 
-let time = 0
+const cameraLookAtAgv = () => {
+	control.target.set(...agv.position.toArray())
+	control.update()
+}
 
-let mouseOnFrustumTop = new THREE.Vector3(0,0,0)
-const arrow = new THREE.ArrowHelper(mouseOnFrustumTop, new THREE.Vector3(0,0,0), 10, 0xffff00)
-scene.add(arrow)
-let primitiveTarget = new THREE.Vector3(0,0,0)
 let idealTarget = new THREE.Vector3(0,0,0)
 let lerpingTarget = new THREE.Vector3(0,0,0)
 
 const updateMouseAffectTarget = () => {
-	primitiveTarget.set(...agv.position.toArray())
-	mouseOnFrustumTop = mouseOnDnc.clone().unproject(camera)
-	const mouseOfNormalized = new THREE.Vector3().subVectors(
-		mouseOnFrustumTop, 
+	mouseOnWorld = mouseOnNdc.clone().unproject(camera)
+	const mouseOnWorldToCamera = new THREE.Vector3().subVectors(
+		mouseOnWorld, 
 		camera.position)
 		.normalize();
-	idealTarget.addVectors(mouseOfNormalized.multiplyScalar(20), primitiveTarget)
+	idealTarget.addVectors(mouseOnWorldToCamera.multiplyScalar(10), agv.position)
+
+	lerpingTarget.lerp(idealTarget,0.1)
+	control.target.set(...lerpingTarget.toArray())
+	control.update()
 }
 
-const updateMouseAffectLerping = () => lerpingTarget.lerp(idealTarget,0.1)
+let time = 0
+
 function animate() {
-	time+=0.01
 	requestAnimationFrame(animate);
 	renderer.render(scene, camera);
 	if (cabinet) {
@@ -263,13 +260,13 @@ function animate() {
 		fadingWallXP.material.update()
 	}
 	if (agv) {
+		time+=0.01
 		updateAvgPosition(agv, time)
 		cameraFollowAvg()
-		flickerLight(time, agvLight)
+		cameraLookAtAgv()
 		updateMouseAffectTarget()
-		updateMouseAffectLerping()
-		control.target.set(...lerpingTarget.toArray())
-		control.update()
+		flickerLight(time, agvLight)
 	}
+
 }
 animate();

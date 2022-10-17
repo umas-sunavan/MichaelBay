@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>My Website</title>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" href="./favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+    <main>
+        <input type="range" min="0" max="4" step="0.1" value="0.5" id="intensity">
+        <div style="display: none">
+            <p id="fragmentShader">
+
+                uniform float uIntensity;
+                void main(void){
+                    
+                gl_FragColor=vec4(0.6 * uIntensity, 0.3 * uIntensity, 1.0 * uIntensity, 1.0);
+                }
+            </p>
+            <p id="vertexShader">
+                void main(void){
+                gl_Position=projectionMatrix*modelViewMatrix*vec4(position, 1.0);
+                }
+            </p>
+        </div>
+
+    </main>
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@latest/build/three.module.js"
+                }
+            }
+        </script>
+
+    <script type="module" src="index.js"></script>
+
+</body>
+
+</html>

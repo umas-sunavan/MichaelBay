@@ -251,7 +251,6 @@ const updateMouseAffectTarget = () => {
 
 const updateMouseAffectLerping = () => lerpingTarget.lerp(idealTarget,0.1)
 function animate() {
-	time+=0.01
 	requestAnimationFrame(animate);
 	renderer.render(scene, camera);
 	if (cabinet) {
@@ -263,6 +262,7 @@ function animate() {
 		fadingWallXP.material.update()
 	}
 	if (agv) {
+		time+=0.01
 		updateAvgPosition(agv, time)
 		cameraFollowAvg()
 		flickerLight(time, agvLight)
