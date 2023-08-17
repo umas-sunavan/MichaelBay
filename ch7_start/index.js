@@ -16,7 +16,7 @@ const renderer = new THREE.WebGLRenderer();
 // 渲染器負責投影畫面在螢幕上，會需要寬高
 renderer.setSize(window.innerWidth, window.innerHeight);
 // 帶入鏡頭跟renderer.domElement實例化它即可
-new OrbitControls(camera, renderer.domElement);
+const control = new OrbitControls(camera, renderer.domElement);
 // 渲染器會產生canvas物件，我們在html的body放置它
 document.body.appendChild(renderer.domElement);
 
@@ -48,11 +48,9 @@ const earthMaterial = new THREE.MeshStandardMaterial({
 });
 const earth = new THREE.Mesh(earthGeometry, earthMaterial);
 scene.add(earth);
-// 宣告旋轉變數
-const cameraLookAt = new THREE.Vector3(10, 0, 0);
-// 移動到animate()之外
-camera.lookAt(cameraLookAt);
-let rotation = 0;
+// 改用這個方法來控制鏡頭的方向
+control.target.set(10, 0, 0);
+control.update();
 function animate() {
   requestAnimationFrame(animate);
   // 每一幀，場景物件都會被鏡頭捕捉

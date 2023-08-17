@@ -39,7 +39,7 @@ const earthGeometry = new THREE.SphereGeometry(5, 50, 50);
 // 匯入材質
 // Author/Origin: NASA Jet Propulsion Laboratory - Solar System Simulator
 const earthTexture = new THREE.TextureLoader().load(
-  "https://storage.googleapis.com/umas_public_assets/michaelBay/ch07/earth_map.jpg"
+  "https://storage.googleapis.com/umas_public_assets/michaelBay/ch07/2k_earth_daymap.jpeg"
 );
 // 帶入材質，設定內外面
 const earthMaterial = new THREE.MeshStandardMaterial({
