@@ -1,117 +1,98 @@
 import * as THREE from "three";
 import { OrbitControls } from "https://unpkg.com/three@latest/examples/jsm/controls/OrbitControls.js";
-import { SVGLoader } from "https://unpkg.com/three@latest/examples/jsm/loaders/SVGLoader.js";
-
-const loadPathsFromSvg = async () =>
-  await new SVGLoader().loadAsync(
-    "https://storage.googleapis.com/umas_public_assets/michaelBay/day17/taiwan.svg"
-  );
-
-loadPathsFromSvg();
-
-// 假設GIS來源資料如下
-const data = [
-  { rate: 14.2, name: "雲嘉" },
-  { rate: 32.5, name: "中彰投" },
-  { rate: 9.6, name: "南高屏" },
-  { rate: 9.7, name: "宜花東" },
-  { rate: 21.6, name: "北北基" },
-  { rate: 3.4, name: "桃竹苗" },
-  { rate: 9.0, name: "澎湖" },
-];
-
-(async () => {
-  const svgData = await loadPathsFromSvg();
-  const paths = svgData.paths;
-  const group = new THREE.Group();
-  // 遞迴paths
-  paths.forEach((path) => {
-    const shapes = SVGLoader.createShapes(path);
-    const color = path.color;
-    const material = new THREE.MeshStandardMaterial({ color });
-    shapes.forEach((shape) => {
-      const color = path.color;
-      // 除了顏色以外，我們還可以抓到id值
-      const parentName = path.userData.node.parentNode.id;
-      const name = path.userData.node.id || parentName;
-      // 抓到ID值之後，對照數據資料
-      const dataRaw = data.find((raw) => raw.name === name);
-      // 取消bevel、steps設成1
-      console.log(dataRaw.rate);
-      if (!dataRaw) return;
-      console.log(dataRaw);
-      const geometry = new THREE.ExtrudeGeometry(shape, {
-        depth: -dataRaw.rate,
-        steps: 1,
-        bevelEnabled: false,
-      });
-      const mesh = new THREE.Mesh(geometry, material);
-      // 旋轉3D物件即可
-      group.rotateX(Math.PI);
-      // 將所有可渲染的Mesh加入成群組物件group
-      group.add(mesh);
-    });
-  });
-  // 顯示群組物件，就可以顯示群組底下的物件
-  scene.add(group);
-})();
-
-const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xf2f2f2);
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
+// PerspectiveCamera 需設定四個參數，下面接著介紹
+scene.background = new THREE.Color(0xffffff);
+const windowRatio = window.innerWidth / window.innerHeight;
+const camera = new THREE.OrthographicCamera(
+  -windowRatio * 10,
+  windowRatio * 10,
+  10,
+  -10,
   0.1,
   1000
 );
-camera.position.set(250, -250, 300);
-// 在camera, renderer宣告後之後加上這行
-const control = new OrbitControls(camera, renderer.domElement);
-control.target.set(250, -250, 0);
-control.update();
 
+// Camera 身為鏡頭，有位置屬性，設定在Z軸即可。
+camera.position.set(0, 0, 15);
+
+// 實例化渲染器
+const renderer = new THREE.WebGLRenderer();
+// 渲染器負責投影畫面在螢幕上，會需要寬高
+renderer.setSize(window.innerWidth, window.innerHeight);
+// 渲染器會產生canvas物件，我們在html的body放置它
+document.body.appendChild(renderer.domElement);
 // 新增環境光
 const addAmbientLight = () => {
-  const light = new THREE.AmbientLight(0xffffff, 0.6);
+  const light = new THREE.AmbientLight(0xffffff, 0.5);
   scene.add(light);
 };
 
-// 新增平行光
-const addDirectionalLight = () => {
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-  directionalLight.position.set(20, 20, 20);
-  scene.add(directionalLight);
-  directionalLight.castShadow = true;
-  const d = 10;
+addAmbientLight();
 
-  directionalLight.shadow.camera.left = -d;
-  directionalLight.shadow.camera.right = d;
-  directionalLight.shadow.camera.top = d;
-  directionalLight.shadow.camera.bottom = -d;
+// 假設圖表拿到這筆資料
+const data = [
+  { rate: 14.2, name: "動力控制IC" },
+  { rate: 32.5, name: "電源管理IC" },
+  { rate: 9.6, name: "智慧型功率IC" },
+  { rate: 18.7, name: "二極體Diode" },
+  { rate: 21.6, name: "功率電晶體Power Transistor" },
+  { rate: 3.4, name: "閘流體Thyristor" },
+];
 
-  // 新增Helper
-  const lightHelper = new THREE.DirectionalLightHelper(
-    directionalLight,
-    20,
-    0xffff00
+// 我準備了簡單的色票，作為圓餅圖顯示用的顏色
+const colorSet = [
+  0x729ecb, 0xa9ecd5, 0xa881cb, 0xf3a39e, 0xffd2a1, 0xbbb5ae, 0xe659ab,
+  0x88d9e2, 0xa77968,
+];
+
+const createPie = (startAngle, endAngle, color) => {
+  const curve = new THREE.EllipseCurve(
+    0,
+    0, // 橢圓形的原點
+    5,
+    5, // X軸的邊長、Y軸的邊長
+    startAngle,
+    endAngle, // 起始的角度、結束的角度（Math.PI x 0.5代表90度）
+    false, // 是否以順時鐘旋轉
+    0 //旋轉橢圓
   );
-  scene.add(lightHelper);
-  // 更新位置
-  directionalLight.target.position.set(0, 0, 0);
-  directionalLight.target.updateMatrixWorld();
-  // 更新Helper
-  lightHelper.update();
+
+  const curvePoints = curve.getPoints(50);
+  const shape = new THREE.Shape(curvePoints);
+  shape.lineTo(0, 0);
+  // 將整個線段的頭尾相連
+  shape.closePath();
+  const shapeGeometry = new THREE.ShapeGeometry(shape);
+  const shapeMaterial = new THREE.MeshBasicMaterial({ color: color });
+  const mesh = new THREE.Mesh(shapeGeometry, shapeMaterial);
+  scene.add(mesh);
+  return mesh;
 };
 
-addAmbientLight();
-addDirectionalLight();
+const dataToPie = (data) => {
+  // 我用sum來記憶上一個餅的結束位置，使得每個餅都從上一個結束位置開始繪製。
+  let sum = 0;
+  data.forEach((datium, i) => {
+    // 將百分比轉換成0~2PI的弧度
+    const radian = (datium.rate / 100) * (Math.PI * 2);
+    createPie(sum, radian + sum, colorSet[i]);
+    sum += radian;
+  });
+};
 
+dataToPie(data);
+
+// 在camera, renderer宣後之後加上這行
+new OrbitControls(camera, renderer.domElement);
+
+// 很像setInterval的函式。每一幀都會執行這個函式
 function animate() {
+  // 它每一幀執行animate()
   requestAnimationFrame(animate);
+  // 每一幀，場景物件都會被鏡頭捕捉
   renderer.render(scene, camera);
 }
+// 函式起始點
 animate();
