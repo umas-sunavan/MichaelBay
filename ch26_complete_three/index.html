@@ -1,0 +1,32 @@
+<!-- index.html -->
+<p id="vertexShader" style="display: none">
+  precision highp float; //設定畫面精確度為高 attribute vec3 aPosition; //
+  接收P5.js傳入的形狀參數。attribute是一種變數。有多少個錨點Vertex
+  Shader就要跑多少次，而每一次attribute變數的數值都會不一樣。 // vec3
+  是一種型別，能儲存三個float的值，其他像是vec2能儲存兩個值,
+  vex4則能儲存四個值。 void main() { // 程式進入點 vec4 positionVec4 =
+  vec4(aPosition, 1.0); //
+  建立一個能儲存四個值的錨點，將aPosition的三個值當做positionVec4的前三個值，第四個值為1.0
+  positionVec4.xy = positionVec4.xy * 2.0 - 1.0; // gl_Position
+  是終點，代表每個錨點應該要在哪個位置呈現 gl_Position = positionVec4; }
+</p>
+<!-- index.html -->
+<p id="fragmentShader" style="display: none">
+  #ifdef GL_ES precision mediump float; //設定畫面精確度為中 #endif uniform vec2
+  u_resolution; //
+  接收javascript傳過來的參數，在這邊是canvas的長寬。要注意這是vec2，所以一次能儲存兩個點
+  void main() { vec2 st = gl_FragCoord.xy/u_resolution.xy; //
+  gl_FragCoord是Fragment
+  Shader內建的每個像素座標資料。每個像素的長寬除上canvas長寬，可以得到每個像素的單位座標(0~1座標)
+  vec2 screenRatio = vec2(u_resolution.x/u_resolution.y,1.0); //
+  長寬比。假設螢幕是800x600，長寬比就是1.33，screenRation就是(1.33,1.0)
+  st*=screenRatio; //
+  讓st乘上長寬比，(0.25,0.5)的像素原本是距離中心點0.55，現在變成(0.60) float
+  length = length(st-vec2(0.5,0.5)*screenRatio); //
+  讓st乘上長寬比，中心點的比例也會變化 //
+  原本位於(0.5,0.5)的像素減掉(0.5,0.5)之後，變成了(0,0)。現在，原點變成了畫布中心。
+  // 每個像素距離(0,0)多遠呢？使用length就可以得到距離(0,0)的長度 //
+  越靠近(0,0)的值越小，越靠近(1,1)的值越大 gl_FragColor =
+  vec4(1.0/length*0.1,1.0/length*0.1,1.0/length*0.1 , 1.0); //
+  每個像素離原點的距離，就是RGB亮度 }
+</p>
